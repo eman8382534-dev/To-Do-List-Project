@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>قائمة المهام</title>
+   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+    
+    body { 
+        font-family: 'Cairo', sans-serif; 
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+        padding: 20px; 
+        min-height: 100vh;
+        animation: gradient 15s ease infinite;
+    }
+    
+    @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .container { 
+        max-width: 650px; 
+        margin: auto; 
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 30px; 
+        border-radius: 25px; 
+        box-shadow: 0 20px 60px rgba(255, 105, 180, 0.3);
+        animation: popIn 0.6s ease;
+    }
+    
+    @keyframes popIn {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    h1 { 
+        text-align: center; 
+        color: #e91e63; 
+        font-size: 2.2em;
+        margin-bottom: 25px;
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    input { 
+        flex: 1;
+        padding: 14px; 
+        border: 2px solid #f8bbd0; 
+        border-radius: 15px; 
+        font-size: 16px;
+        transition: 0.3s;
+    }
+    input:focus {
+        outline: none;
+        border-color: #e91e63;
+        box-shadow: 0 0 15px rgba(233, 30, 99, 0.2);
+        transform: scale(1.02);
+    }
+    
+    button { 
+        padding: 12px 18px; 
+        border: none; 
+        border-radius: 12px; 
+        cursor: pointer; 
+        font-weight: bold;
+        transition: all 0.3s ease;
+        font-family: 'Cairo';
+    }
+    button:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    button:active {
+        transform: scale(0.95);
+    }
+
+    .add-btn { 
+        background: linear-gradient(45deg, #e91e63, #f06292); 
+        color: white; 
+        box-shadow: 0 4px 10px rgba(233, 30, 99, 0.3);
+    }
+    
+    .task { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        padding: 16px; 
+        background: white;
+        margin-top: 12px;
+        border-radius: 15px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        animation: slideIn 0.4s ease;
+        transition: 0.3s;
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateX(-50px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .task:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 20px rgba(233, 30, 99, 0.15);
+    }
+    
+    .done { 
+        text-decoration: line-through; 
+        color: #aaa;
+    }
+    
+    .task:has(.done) {
+        background: #fce4ec;
+    }
+
+    .delete-btn { 
+        background: linear-gradient(45deg, #f44336, #e57373); 
+        color: white; 
+    }
+    .done-btn { 
+        background: linear-gradient(45deg, #2196F3, #64b5f6); 
+        color: white; 
+        margin: 0 5px;
+    }
+    .edit-btn {
+        background: linear-gradient(45deg, #ff9800, #ffb74d);
+        color: white;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 قائمة المهام</h1>
+        
+       <div class="input-group">
+    <button class="add-btn" onclick="addTask()">اضافة ✨</button>
+    <input type="text" id="taskInput" placeholder="اكتبي مهمة جديدة...">
+</div>
+
+        <div id="taskList" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        const API_URL = "https://localhost:7081/api/Tasks"; // غيري ده لو البورت مختلف
+
+        
+        // 1. نجيب كل المهام اول ما الصفحة تفتح
+        window.onload = getTasks;
+
+        async function getTasks() {
+            const res = await fetch(API_URL);
+            const tasks = await res.json();
+            showTasks(tasks);
+        }
+
+      
+
+function showTasks(tasks) {
+    const list = document.getElementById('taskList');
+    list.innerHTML = '';
+    tasks.forEach(task => {
+        list.innerHTML += `
+            <div class="task">
+                <span class="${task.isDone ? 'done' : ''}">${task.title}</span>
+                <div>
+                    ${!task.isDone ? `<button class="done-btn" onclick="doneTask(${task.id}, '${task.title}')">✓</button>` : ''}
+                    <button class="edit-btn" onclick="editTask(${task.id}, '${task.title}')">تعديل</button>
+                    <button class="delete-btn" onclick="deleteTask(${task.id})">X</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+
+        // 3. نضيف مهمة جديدة
+        async function addTask() {
+            const input = document.getElementById('taskInput');
+            if(input.value === '') return;
+            
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: input.value, isDone: false })
+            });
+            input.value = '';
+            getTasks(); // نعمل ريفريش
+        }
+
+        // 4. نعلم مهمة انها خلصت
+        async function doneTask(id, title) {
+            await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, title: title, isDone: true })
+            });
+            getTasks();
+        }
+
+        // 5. نمسح مهمة
+        async function deleteTask(id) {
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            getTasks();
+        }
+
+        // 6. تعديل مهمة
+async function editTask(id, oldTitle) {
+    const newTitle = prompt("عدلي المهمة:", oldTitle); 
+    
+    if(newTitle === null || newTitle === '') return; 
+    
+    await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, title: newTitle, isDone: false })
+    });
+    getTasks(); 
+}
+    </script>
+</body>
+</html>
