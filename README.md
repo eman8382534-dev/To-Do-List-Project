@@ -21,7 +21,7 @@ A simple task management app built with ASP.NET Core and SQL Server, with a sepa
 
 ```
 To-Do List/
-├── bachend/     # ASP.NET Core project
+├── backend/     # ASP.NET Core project
 └── frontend/    # Frontend (index.html)
 ```
 
